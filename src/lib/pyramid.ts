@@ -9,7 +9,7 @@ export type Group = {
   customKey?: string
   signed?: boolean
   signedCustom?: boolean
-  // Show this group's own subtotal at its heading and keep it out of the tier total.
+  // Also show this group's own subtotal at its heading (it still counts toward the tier total).
   separateTotal?: boolean
 }
 
@@ -163,7 +163,8 @@ export function computeTotals(data: CustomerData) {
   for (const t of TIERS) {
     let sum = 0
     for (const g of t.groups) {
-      if (g.separateTotal) continue
+      // Liquidity (and any other separateTotal group) still counts toward the
+      // tier/grand total — separateTotal only adds an extra subtotal label.
       sum += g.fields.reduce((s, f) => s + (amounts[f.key] || 0), 0)
       if (g.customKey) sum += (groupItems[g.customKey] || []).reduce((s, o) => s + (o.amount || 0), 0)
     }
