@@ -1,24 +1,23 @@
-import Database from 'better-sqlite3'
-import path from 'node:path'
-import fs from 'node:fs'
-import { fileURLToPath } from 'node:url'
+import { Pool } from 'pg'
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
-// On a host with a persistent disk (e.g. Render), point DATA_DIR at the
-// mounted volume so the SQLite file survives redeploys.
-const dataDir = process.env.DATA_DIR || path.join(__dirname, 'data')
-fs.mkdirSync(dataDir, { recursive: true })
+if (!process.env.DATABASE_URL) {
+  throw new Error(
+    'DATABASE_URL is not set. Copy .env.example to .env and fill in a Postgres connection string (e.g. from Neon).',
+  )
+}
 
-export const db = new Database(path.join(dataDir, 'customers.sqlite'))
-db.pragma('journal_mode = WAL')
+export const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+})
 
-db.exec(`
+await pool.query(`
   CREATE TABLE IF NOT EXISTS customers (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL DEFAULT '',
-    grand REAL NOT NULL DEFAULT 0,
-    data TEXT NOT NULL,
-    created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL
+    grand DOUBLE PRECISION NOT NULL DEFAULT 0,
+    data JSONB NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL
   )
 `)

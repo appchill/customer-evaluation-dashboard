@@ -1,8 +1,9 @@
+import 'dotenv/config'
 import express from 'express'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { randomUUID } from 'node:crypto'
-import { db } from './db.js'
+import { pool } from './db.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
@@ -12,58 +13,75 @@ const row = (r) => ({
   id: r.id,
   name: r.name,
   grand: r.grand,
-  data: JSON.parse(r.data),
+  data: r.data,
   createdAt: r.created_at,
   updatedAt: r.updated_at,
 })
 
 // List — summary only (no need to ship every field to the dashboard)
-app.get('/api/customers', (_req, res) => {
-  const rows = db
-    .prepare('SELECT id, name, grand, data, created_at, updated_at FROM customers ORDER BY updated_at DESC')
-    .all()
-  res.json(rows.map(row))
+app.get('/api/customers', async (_req, res, next) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT id, name, grand, data, created_at, updated_at FROM customers ORDER BY updated_at DESC',
+    )
+    res.json(rows.map(row))
+  } catch (e) {
+    next(e)
+  }
 })
 
-app.get('/api/customers/:id', (req, res) => {
-  const r = db.prepare('SELECT * FROM customers WHERE id = ?').get(req.params.id)
-  if (!r) return res.status(404).json({ error: 'not found' })
-  res.json(row(r))
+app.get('/api/customers/:id', async (req, res, next) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM customers WHERE id = $1', [req.params.id])
+    if (!rows[0]) return res.status(404).json({ error: 'not found' })
+    res.json(row(rows[0]))
+  } catch (e) {
+    next(e)
+  }
 })
 
-app.post('/api/customers', (req, res) => {
-  const id = randomUUID()
-  const now = new Date().toISOString()
-  const name = req.body?.name ?? ''
-  const grand = Number(req.body?.grand) || 0
-  const data = JSON.stringify(req.body?.data ?? {})
-  db.prepare(
-    'INSERT INTO customers (id, name, grand, data, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
-  ).run(id, name, grand, data, now, now)
-  res.status(201).json(row(db.prepare('SELECT * FROM customers WHERE id = ?').get(id)))
+app.post('/api/customers', async (req, res, next) => {
+  try {
+    const id = randomUUID()
+    const now = new Date().toISOString()
+    const name = req.body?.name ?? ''
+    const grand = Number(req.body?.grand) || 0
+    const data = JSON.stringify(req.body?.data ?? {})
+    const { rows } = await pool.query(
+      'INSERT INTO customers (id, name, grand, data, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [id, name, grand, data, now, now],
+    )
+    res.status(201).json(row(rows[0]))
+  } catch (e) {
+    next(e)
+  }
 })
 
-app.put('/api/customers/:id', (req, res) => {
-  const existing = db.prepare('SELECT id FROM customers WHERE id = ?').get(req.params.id)
-  if (!existing) return res.status(404).json({ error: 'not found' })
-  const now = new Date().toISOString()
-  const name = req.body?.name ?? ''
-  const grand = Number(req.body?.grand) || 0
-  const data = JSON.stringify(req.body?.data ?? {})
-  db.prepare('UPDATE customers SET name = ?, grand = ?, data = ?, updated_at = ? WHERE id = ?').run(
-    name,
-    grand,
-    data,
-    now,
-    req.params.id,
-  )
-  res.json(row(db.prepare('SELECT * FROM customers WHERE id = ?').get(req.params.id)))
+app.put('/api/customers/:id', async (req, res, next) => {
+  try {
+    const now = new Date().toISOString()
+    const name = req.body?.name ?? ''
+    const grand = Number(req.body?.grand) || 0
+    const data = JSON.stringify(req.body?.data ?? {})
+    const { rows } = await pool.query(
+      'UPDATE customers SET name = $1, grand = $2, data = $3, updated_at = $4 WHERE id = $5 RETURNING *',
+      [name, grand, data, now, req.params.id],
+    )
+    if (!rows[0]) return res.status(404).json({ error: 'not found' })
+    res.json(row(rows[0]))
+  } catch (e) {
+    next(e)
+  }
 })
 
-app.delete('/api/customers/:id', (req, res) => {
-  const result = db.prepare('DELETE FROM customers WHERE id = ?').run(req.params.id)
-  if (result.changes === 0) return res.status(404).json({ error: 'not found' })
-  res.status(204).end()
+app.delete('/api/customers/:id', async (req, res, next) => {
+  try {
+    const { rowCount } = await pool.query('DELETE FROM customers WHERE id = $1', [req.params.id])
+    if (rowCount === 0) return res.status(404).json({ error: 'not found' })
+    res.status(204).end()
+  } catch (e) {
+    next(e)
+  }
 })
 
 // In production there's no separate Vite dev server — this process also
