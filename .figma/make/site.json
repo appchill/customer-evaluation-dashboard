@@ -1,0 +1,10 @@
+{
+  "description": "This dashboard streamlines customer assessments related to financial pyramids, providing valuable insights for financial advisors and businesses.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
