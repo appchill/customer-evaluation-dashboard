@@ -92,7 +92,13 @@ if (process.env.NODE_ENV === 'production') {
   app.get(/^(?!\/api).*/, (_req, res) => res.sendFile(path.join(distDir, 'index.html')))
 }
 
-const port = parseInt(process.env.PORT || process.env.API_PORT || '4001')
+// In dev, PORT belongs to the Vite dev server (see vite.config.ts) — this
+// process must stay on API_PORT there, or the two servers fight over the
+// same port. Only in production (one combined process) does PORT apply here.
+const port =
+  process.env.NODE_ENV === 'production'
+    ? parseInt(process.env.PORT || '4001')
+    : parseInt(process.env.API_PORT || '4001')
 app.listen(port, () => {
   console.log(`Server listening on http://localhost:${port}`)
 })
