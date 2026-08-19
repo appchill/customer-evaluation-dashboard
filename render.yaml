@@ -3,7 +3,10 @@ services:
     name: customer-evaluation-dashboard
     runtime: node
     plan: free
-    buildCommand: npm install && npm run build
+    # --include=dev is required: Render sets NODE_ENV=production during the
+    # build too, which makes plain `npm install` skip devDependencies —
+    # and vite (needed to build) lives in devDependencies.
+    buildCommand: npm install --include=dev && npm run build
     startCommand: npm run start
     envVars:
       - key: NODE_ENV
