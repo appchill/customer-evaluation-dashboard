@@ -136,6 +136,7 @@ export default function Assessment({ id, onBack }: { id: string; onBack: () => v
         {/* ---------------- Header ---------------- */}
         <header className="mb-10 flex flex-col gap-6 border-b border-border pb-8 md:flex-row md:items-end md:justify-between">
           <div>
+            <img src="/brand/logo-full.png" alt="Beyond11" className="mb-6 h-9 w-auto" />
             <button
               type="button"
               onClick={onBack}
@@ -498,7 +499,8 @@ export default function Assessment({ id, onBack }: { id: string; onBack: () => v
           </div>
         </div>
 
-        <footer className="mt-12 flex flex-col items-center gap-1 border-t border-border pt-6 text-center">
+        <footer className="mt-12 flex flex-col items-center gap-3 border-t border-border pt-6 text-center">
+          <img src="/brand/logo-mark.png" alt="" className="h-6 w-auto opacity-40" />
           <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-muted-foreground">
             Prepared for {customer || '—'} · {new Date().toLocaleDateString('th-TH')}
           </p>

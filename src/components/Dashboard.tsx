@@ -51,6 +51,7 @@ export default function Dashboard({ onOpen }: { onOpen: (id: string) => void }) 
       <div className="mx-auto max-w-[1240px] px-6 py-10 md:px-10 md:py-14">
         <header className="mb-10 flex flex-col gap-6 border-b border-border pb-8 md:flex-row md:items-end md:justify-between">
           <div>
+            <img src="/brand/logo-full.png" alt="Beyond11" className="mb-6 h-9 w-auto" />
             <p className="font-mono text-[11px] uppercase tracking-[0.34em] text-accent">
               Financial Assessment · แบบประเมินลูกค้า
             </p>
@@ -155,6 +156,10 @@ export default function Dashboard({ onOpen }: { onOpen: (id: string) => void }) 
             )
           })}
         </div>
+
+        <footer className="mt-16 flex justify-center">
+          <img src="/brand/logo-mark.png" alt="" className="h-6 w-auto opacity-40" />
+        </footer>
       </div>
     </div>
   )
